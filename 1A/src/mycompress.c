@@ -182,8 +182,7 @@ int main(int argc, char **argv) {
 
 				if( in_stream == 0 )
 				{
-					fprintf( stderr, "%s: Could not open file '%s'\n", pgm_name, in_filename );
-					exit(1);
+					TERMINATE_ON_ERR(pgm_name, "Could not open file '%s'", in_filename);
 				}
 				
 				io_information = process_input( in_stream, rename_file( in_filename ));
