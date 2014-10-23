@@ -1,4 +1,5 @@
-opyright (c) 2012 OSUE Team <osue-team@vmars.tuwien.ac.at>
+/*
+ * Copyright (c) 2012 OSUE Team <osue-team@vmars.tuwien.ac.at>
 *
 *  * Permission to use, copy, modify, and distribute this software for any
 *   * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +28,7 @@ opyright (c) 2012 OSUE Team <osue-team@vmars.tuwien.ac.at>
 #include <signal.h>
 #include <errno.h>
 #include <limits.h>
-
+#include <netdb.h>
 
 /* === Constants === */
 
@@ -289,13 +290,33 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	/*MEINS*/
+	struct addrinfo hints;
+	struct addrinfo *ai, *aip;
+	int socketfd, res;
 
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE; /* <-- */
+
+	res = getaddrinfo( NULL, (char *)(options.portno), &hints, &ai );
+	
+	aip = ai;
+	socketfd = socket( aip->ai_family, aip->ai_socktype,
+						aip->ai_protocol );
+
+	/* Assign the address to the socket */
+	res = bind( socketfd, aip->ai_addr, aip->ai_addrlen );
+	if( res != 0) {
+		fprintf( stderr, "getaddrinfo: %s\n", gai_strerror(res));
+		exit(EXIT_FAILURE);
+	}
 	/* Create a new TCP/IP socket `sockfd`, and set the SO_REUSEADDR
 	 *        option for this socket. Then bind the socket to localhost:portno,
 	 *               listen, and wait for new connections, which should be assigned to
 	 *                      `connfd`. Terminate the program in case of an error.
 	 *                          */
-#error "insert your code here"
 
 	/* accepted the connection */
 	ret = EXIT_SUCCESS;
@@ -321,7 +342,7 @@ int main(int argc, char *argv[])
 		DEBUG("Sending byte 0x%x\n", buffer[0]);
 
 		/* send message to client */
-#error "insert your code here"
+//#error "insert your code here"
 
 		/* We sent the answer to the client; now stop the game
 		 *            if its over, or an error occured */
@@ -431,5 +452,5 @@ static void parse_args(int argc, char **argv, struct opts *options)
 		}
 		options->secret[i] = color;
 	}
-}
 
+}
