@@ -1,4 +1,4 @@
-/**
+
  * @file mycompress.c
  * @author Constantin Schieber <e1228774@tuwien.ac.at>
  * @date 20.10.2014

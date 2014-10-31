@@ -266,7 +266,6 @@ static void signal_handler(int sig)
  *        */
 int main(int argc, char *argv[])
 {
-
 	struct opts options;
 	sigset_t blocked_signals;
 	int round;
@@ -293,31 +292,64 @@ int main(int argc, char *argv[])
 	/*MEINS*/
 	struct addrinfo hints;
 	struct addrinfo *ai, *aip;
-	int socketfd, res;
+	int socketfd, res, yes = 1;
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE; /* <-- */
 
-	res = getaddrinfo( NULL, (char *)(options.portno), &hints, &ai );
+	if(( res = getaddrinfo( NULL, (char *)(options.portno), &hints, &ai )) != 0) {
+		fprintf(stderr, "getadrrinfo: %s\n", gai_streerror( res ));
+		exit(1);
+	}
 	
 	aip = ai;
-	socketfd = socket( aip->ai_family, aip->ai_socktype,
-						aip->ai_protocol );
-
-	/* Assign the address to the socket */
-	res = bind( socketfd, aip->ai_addr, aip->ai_addrlen );
-	if( res != 0) {
-		fprintf( stderr, "getaddrinfo: %s\n", gai_strerror(res));
-		exit(EXIT_FAILURE);
+	
+	if(( socketfd = socket( aip->ai_family, aip->ai_socktype, aip->ai_protocol )) == -1) {
+		perror( "server: socket" );
 	}
+	
+	if( setsockopt( sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int) ) == -1) {
+		perror( "setsocketopt" );
+		exit(1);
+	}
+	
+	/* Assign the address to the socket */
+	if(( res = bind( socketfd, aip->ai_addr, aip->ai_addrlen )) == -1) {
+		close(sockfd);
+		perror("server: bind");
+	}
+
+	if( aip == NULL ) {
+		fprintf( stderr, "server: failed to bind\n" );
+		return 2;
+	}
+
+	freeaddrinfo( aip ); //all done with this structure
+
+	if( listen( sockfd, BACKLOG ) == -1 ) 
+	{
+		perror( "listen" );
+		exit(1);
+
+	}
+
+	s.sa_handler = sigchld_handler;
+	sigemptyset( &s.sa_mask );
+	s.sa_flags = SA_RESTART;
+	if( sigaction( SIGCHLD, &s, NULL ) == -1 ) {
+		perror( "sigaction" );
+		exit(1);
+	}
+
 	/* Create a new TCP/IP socket `sockfd`, and set the SO_REUSEADDR
 	 *        option for this socket. Then bind the socket to localhost:portno,
 	 *               listen, and wait for new connections, which should be assigned to
 	 *                      `connfd`. Terminate the program in case of an error.
 	 *                          */
 
+	
 	/* accepted the connection */
 	ret = EXIT_SUCCESS;
 	for (round = 1; round <= MAX_TRIES; ++round) {
@@ -405,7 +437,7 @@ static void parse_args(int argc, char **argv, struct opts *options)
 
 	/* If we got here, strtol() successfully parsed a number */
 
-	if (*endptr != '\0') { /* In principal not necessarily an error... */
+	if (*endptr != '\0') { /* In principal not nessarily an error... */
 		bail_out(EXIT_FAILURE, "Further characters after <server-port>: %s", endptr);
 	}
 
