@@ -2,11 +2,11 @@ CC=gcc
 DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE
 CFLAGS=-Wall -g -std=c99 -pedantic $(DEFS)
 
-OBJECTFILES=mycompress_improved.c
+OBJECTFILES=mycompress.c
 
 .PHONY: all clean
 
-all: mycompress_improved
+all: mycompress
 
 myprogram: $(OBJECTFILES)
 	$(CC) $(LDFLAGS) -o $@ $^
@@ -15,4 +15,4 @@ myprogram: $(OBJECTFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f *.o
+	rm -f $(OBJECTFILES) myprogram

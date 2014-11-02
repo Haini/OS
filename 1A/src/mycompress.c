@@ -1,205 +1,280 @@
-
- * @file mycompress.c
- * @author Constantin Schieber <e1228774@tuwien.ac.at>
- * @date 20.10.2014
+/*
+ * Copyright (c) 2014 Constantin Schieber <e1228774@student.tuwien.ac.at>
  *
- * @brief Main program module
- *
- * This program accepts *.txt files or a stdin stream and compresses them. The output is then written to a *.comp file
- **/
+ *	* Name of Module: mycompress.c
+ *	 * @author Constantin Schiber, e1228774
+ *	  * @brief Compresses a given input stream (stdin, file) and creates a new file of the form xxx.txt.comp with the output
+ *	   * @details 
+ *	    * @date 02.11.2014
+ *	     */
 
 #include <stdio.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
-#define TERMINATE_ON_ERR(pgm_name, text) { (void)fprintf( stderr, "%s: %s\n", pgm_name, text ); exit(1);}
+/* === Constants === */
 
-struct s_io_information
-{
-		char *in_name;
-		char *out_name;
-		int in_ccount;
-		int out_ccount;
-};
+const int SIGN_MAX = 9;
 
-extern int errno; /**< global error number used by errno.h */
 
-static char *pgm_name; /**< The program name.*/
+/* === Global Variables === */
+
+/* Name of the program */
+char* pgm_name;
+
+/* Input and output stream */
+FILE *in_stream, *out_stream;
+
+/* === Prototypes === */
+
+/**
+ *	* @brief Closes streams when the program terminates
+ *	 */
+void cleanup (void);
+
+/**
+ *	* @brief Prints the Synopsis for calling the program
+ *	 */
+void usage (void);
+
+/**
+ *	* @brief Reads the stream, compresses while reading and writes to the output stream
+ *	 * @details Reads the given input stream char by char, counts the occourences of the same char and writes the amount of
+ *	  * occurences to the output stream when the next char is different from the previous.
+ *	   * @param A reference to the int that counts the amount of chars of the original file
+ *	    * @param A reference to the int that counts the amount of chars of the compressed file
+ *	     */
+void compress (int*, int*);
+
+/**
+ *	* @brief Opens the input and output stream
+ *	 * @details
+ *	  * @param A reference to the name of the input stream
+ *	   * @param A reference to the name of the output stream
+ *	    */
+void open_stream (char* , char* );
+
+/*In Out CcIn CcOut*/
+
+/**
+ *	* @brief Formats and prints the results of the compression
+ *	 * @details
+ *	  * @param A reference to the name of the input stream
+ *	   * @param A reference to the name of the output stream
+ *	    * @param The amount of chars in the original file
+ *	     * @param The amount of chars in the compressed file
+ *	      */
+void output_summary (char*, char*, int, int);
+
 
 
 /**
- * Mandatory usage function
- * @brief This function writes helpful usage information about the program to stderr
- * @details global variables: pgm_name
- * @param
- * @return
- */
-static void usage (void) {
-		(void) fprintf(stderr, "USAGE: %s [file1] [file2] ...\n", pgm_name);
-		exit(EXIT_FAILURE);
+ *	* @brief Program entry point
+ *	 * @param argc The argument counter
+ *	  * @param argv The argument vector
+ *	   * @return EXIT_SUCCESS on success, EXIT_ERROR in case of an error
+ *	    */
+int main(int argc, char** argv)
+{
+	/* Define a subroutine where the program jumps to if it exits gracefully */
+	(void) atexit (cleanup);
+
+	/* Input / Output Character Count */
+	int in_ccount, out_ccount;	
+	
+	/* Save the name of the program */
+	pgm_name = argv[0];
+	
+
+	/* Program is called with arguments */
+	if (argc > 1)
+	{	
+		for (int i = 1; i < argc; i++)
+		{
+			char* out_name = malloc(sizeof(char)* (strlen(argv[i])+5));	//Allocate memory for the name of the output string
+			(void) open_stream (argv[i], out_name);
+			(void) compress (&in_ccount, &out_ccount);
+			(void) output_summary (argv[i], out_name, in_ccount, out_ccount);
+			free(out_name);
+		}
+	 }
+	 else
+	 {
+		 char* out_name = malloc(sizeof(char)* (strlen("stdin.txt")+5));	//Allocate memory for the name of the output string
+		 (void) open_stream ("stdin", out_name );
+		 (void) compress (&in_ccount, &out_ccount);
+		 (void) output_summary ("stdin", out_name, in_ccount, out_ccount);
+		 free(out_name);
+	 }
+
+	 exit (EXIT_SUCCESS);
 }
 
-/**
- * Input processing function
- * @brief This function reads the current stream, processes it and puts the output in a new file
- * @details
- * @param
- * @return
- */
-static struct s_io_information process_input( FILE* in_stream, char* out_filename )
+
+void cleanup (void)
 {
-		int x, prev_x=NULL, count_x = NULL;
-		const char *mode = "w";
-		int in_length = 0, out_length = 0;
-		
-		struct s_io_information io_information;
-
-		FILE *out_stream = fopen( out_filename, mode );
-
-		if( out_stream == 0 )
-		{
-				//(void) fprintf( stderr, "%s: Cannot create output file. Program can't finish execution\n", pgm_name );
-				TERMINATE_ON_ERR(pgm_name, "Cannot create output file. Program can't finish execution");
-				fclose( out_stream );
-				fclose( in_stream );
-
-				exit(1);
-		}
-
-		while (( x = fgetc( in_stream )) != EOF )
-		{
-				if( prev_x == 0 || prev_x == x )
-				{
-						prev_x = x;
-						count_x++;
-				} 
-				else
-				{
-						(void) fputc( prev_x, out_stream );
-						(void) fprintf( out_stream, "%d", count_x );
-						prev_x = x;
-						count_x = 1;
-						out_length+=2;
-				}
-				in_length++;
-		}
-		if(count_x > 0) {
-				(void) fputc( prev_x, out_stream );
-				(void) fprintf( out_stream, "%d", count_x );
-		}
-		prev_x = 0;
-		count_x = 0;
-
-		io_information.in_ccount = in_length;
-		io_information.out_ccount = out_length;
-		io_information.out_name = out_filename;
-
-		if( out_stream != NULL )
-				(void)fclose( out_stream );
-		if( in_stream != NULL )
-				(void)fclose( in_stream );
-
-		return io_information;
+	if (in_stream != NULL) 
+	{
+		fclose (in_stream);
+	}
+	if (out_stream != NULL)
+	{
+		fclose (out_stream);
+	}
 }
 
-/**
- * Renaming function
- * @brief This function reads a passed char* of the form xxx.txt and renames it to xxx.comp
- * @details
- * @param char* out_name contains the char* that needs to be renamed
- * @return char* out_newname contains the renamed char*
- */
-static char* rename_file( char* out_name )
+
+void usage (void)
 {
+	(void) fprintf(stderr, "Usage: %s [file1] [file2] ...\n", pgm_name);
+	exit (EXIT_FAILURE);
+}
 
-		char* out_newname = malloc( strlen( out_name ) + 5 ); /*<Allocate memory for the new string. +5 because of .comp */
 
-		if( out_newname == NULL ) 
+void open_stream (char* in_name, char* out_name)
+{
+	/* If we have a stdin as input we need to handle it in another way */		
+	if (strcmp(in_name, "stdin") != 0) 
+	{
+		if ((in_stream = fopen(in_name, "r")) == NULL)
 		{
-				TERMINATE_ON_ERR(pgm_name, "Cannot allocate memory for renaming. Program can't finish execution");
+			usage();	//The only case where the user could benefit from a usage() call
+			exit (EXIT_FAILURE);
 		}
 
-		(void) strcat( out_newname, out_name );
+	}
+	else
+	{
+		in_stream = stdin;
+	}
 
-		(void) strcat( out_newname, ".comp" );
 
-		return out_newname;
+	/* Rename the output file from xxx.txt to xxx.txt.comp */
+	if ((strcpy (out_name, in_name)) == NULL)
+	{
+		(void) fprintf(stderr, "%s: Error while copying strings: %s\n", pgm_name, strerror (errno));
+		exit (EXIT_FAILURE);
+	}
+
+	if ((strcat (out_name, ".comp")) == NULL)
+	{
+		(void) fprintf(stderr, "%s: Error while concatenating strings: %s\n", pgm_name, strerror (errno));
+		exit (EXIT_FAILURE);
+	}
+
+	
+	/* Output file is always the same */
+	if ((out_stream = fopen(out_name, "w")) == NULL)
+	{
+		(void) fprintf(stderr, "%s: Error while opening stream: %s\n", pgm_name, strerror (errno));
+		//Couldn't open stream
+		exit (EXIT_FAILURE);
+	}
 }
 
-/**
- * Provides a summary of the compressing results
- * @brief Puts the name of the in and out files with their char count on the screen
- * @details
- * @param
- */
-static void summary(struct s_io_information io_out)
+
+void compress (int* in_ccount, int* out_ccount)
 {
-		int offset = strlen( io_out.out_name ) + 2; /*< Because of ': ' + 2*/
-		char *in = (char *) malloc(sizeof(char)*offset);
-		memcpy(in , io_out.in_name, offset);
-		strcat( in, ": " );
-		char *out = (char *) malloc(sizeof(char)*offset);
-		memcpy(out , io_out.out_name, offset);
-		strcat( out, ": " );
+	int x, prev_x=NULL, count_x=1;
+	int in_length = 0, out_length = 0;
 
-		fprintf(stdout, "%-*s%-d\n%-*s%-d\n", offset, in, io_out.in_ccount,
-											offset, out, 
-											io_out.out_ccount);
-		//free(in);
-		//free(out);
-}
-
-/**
- * Program entry point.
- * @brief The program starts here.
- * @details Non yet.
- * global variables: pgm_name
- * @param argc The argument counter.
- * @param argv The argument vector.
- * @return Returns EXIT_SUCCESS in case of success.
- */
-
-int main(int argc, char **argv) {
-
-		pgm_name = argv[0];
-
-		int c, offset;
-		char *in_filename = "stdin.txt";
-		FILE *in_stream = stdin;	
-		struct s_io_information io_information;
-		
-
-		if(argc > 1)
+	/* Read the input stream char by char and count how often the char occours consecutive. Always save the previous char.
+	 * If the chars are not equal write the current sign and its number of occurrences to the output stream
+	 */
+	while ((x = fgetc (in_stream)) != EOF)
+	{
+		if (in_length > 0)
 		{
-			for(int i = 1; i < argc; i++)
+			if(prev_x == x)
 			{
-				in_filename = (char *) malloc(sizeof(argv[i]));	
-				strcpy( in_filename , argv[i] );
-
-				in_stream = fopen( in_filename, "r");
-
-				if( in_stream == 0 )
+				count_x++;
+			}
+			else
+			{
+				if ((fputc(prev_x, out_stream)) == EOF)
 				{
-					TERMINATE_ON_ERR(pgm_name, "Could not open file '%s'", in_filename);
+					(void) fprintf(stderr, "%s: Error while writing to stream: %s\n", pgm_name, strerror (errno));
+					
+					//Could not write to file
+					exit (EXIT_FAILURE);
+				}
+
+				if ((fprintf(out_stream, "%d", count_x)) == EOF)
+				{
+					
+					(void) fprintf(stderr, "%s: Error while writing to stream: %s\n", pgm_name, strerror (errno));
+
+					//Could not write to file
+					exit (EXIT_FAILURE);
 				}
 				
-				io_information = process_input( in_stream, rename_file( in_filename ));
-				io_information.in_name = in_filename;
-				
-				summary( io_information );
-
-				free(in_filename);
-				free(io_information.out_name);
+				prev_x = x;
+				count_x = 1;
+				out_length+=2;
 			}
-		 }
-		 else
-		 {
-		 	io_information = process_input( in_stream, rename_file( in_filename ));
-			io_information.in_name = in_filename;	
-			summary( io_information );
-		 }
+		}
+		else
+		{
+			prev_x = x;
+		}
+
+		in_length++;
+				
+		/* The maximal amount of signs in one line is defined as the constant LINE_MAX, but since we can assume that no
+		 * line contains more than LINE_MAX signs (which could be 0 too) no checks are done.
+		 */
 		
-		exit(EXIT_SUCCESS);
+	}
+	
+	*in_ccount = in_length;
+	*out_ccount = out_length;
+
+	if ((fputc(prev_x, out_stream)) == EOF)
+	{
+		(void) fprintf(stderr, "%s: Error while writing to stream: %s\n", pgm_name, strerror (errno));
+		
+		//Could not write to file
+		exit (EXIT_FAILURE);
+	}
+	
+	if ((fprintf(out_stream, "%d", count_x)) == EOF)
+	{
+		(void) fprintf(stderr, "%s: Error while writing to stream: %s\n", pgm_name, strerror (errno));
+	
+		//Could not write to file
+		exit (EXIT_FAILURE);
+	}
+
+}
+
+
+void output_summary (char* in_name, char* out_name, int in_ccount, int out_ccount)
+{
+	int offset = strlen( out_name ) + 2; /*< Because of ': ' + 2*/
+	
+	char *in = (char *) malloc(sizeof(char)*offset);
+	if (in == NULL) 
+	{
+		(void) fprintf(stderr, "%s: Error while allocating memory: %s\n", pgm_name, strerror (errno));
+	}
+	
+	//We don't need to check the return value of memcpy since it only returns a pointer to dest, same goes for strcat
+	(void) memcpy(in , in_name, offset);	
+	(void) strcat( in, ": " );
+
+	char *out = (char *) malloc(sizeof(char)*offset);
+	if (out == NULL)
+	{
+		(void) fprintf(stderr, "%s: Error while allocating memory: %s\n", pgm_name, strerror (errno));
+	}
+	(void) memcpy(out , out_name, offset);
+	(void) strcat( out, ": " );
+
+	(void) fprintf(stdout, "%-*s%-d\n%-*s%-d\n", offset, in, in_ccount,
+			offset, out,
+			out_ccount);
+
+	free (in);
+	free (out);
 }
