@@ -1,7 +1,5 @@
-/*
- * Copyright (c) 2014 Constantin Schieber <e1228774@student.tuwien.ac.at>
- *
- *	* Name of Module: mycompress.c
+/**
+ *	* @file mycompress.c
  *	 * @author Constantin Schiber, e1228774
  *	  * @brief Compresses a given input stream (stdin, file) and creates a new file of the form xxx.txt.comp with the output
  *	   * @details 
@@ -42,16 +40,16 @@ void usage (void);
  *	* @brief Reads the stream, compresses while reading and writes to the output stream
  *	 * @details Reads the given input stream char by char, counts the occourences of the same char and writes the amount of
  *	  * occurences to the output stream when the next char is different from the previous.
- *	   * @param A reference to the int that counts the amount of chars of the original file
- *	    * @param A reference to the int that counts the amount of chars of the compressed file
+ *	   * @param in_ccount A reference to the int that counts the amount of chars of the original file
+ *	    * @param in_ccount A reference to the int that counts the amount of chars of the compressed file
  *	     */
 void compress (int*, int*);
 
 /**
  *	* @brief Opens the input and output stream
  *	 * @details
- *	  * @param A reference to the name of the input stream
- *	   * @param A reference to the name of the output stream
+ *	  * @param in_name A reference to the name of the input stream
+ *	   * @param out_name A reference to the name of the output stream
  *	    */
 void open_stream (char* , char* );
 
@@ -60,10 +58,10 @@ void open_stream (char* , char* );
 /**
  *	* @brief Formats and prints the results of the compression
  *	 * @details
- *	  * @param A reference to the name of the input stream
- *	   * @param A reference to the name of the output stream
- *	    * @param The amount of chars in the original file
- *	     * @param The amount of chars in the compressed file
+ *	  * @param in_name A reference to the name of the input stream
+ *	   * @param out_name A reference to the name of the output stream
+ *	    * @param in_ccount The amount of chars in the original file
+ *	     * @param out_ccount The amount of chars in the compressed file
  *	      */
 void output_summary (char*, char*, int, int);
 

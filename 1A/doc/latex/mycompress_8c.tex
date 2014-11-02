@@ -1,0 +1,222 @@
+\hypertarget{mycompress_8c}{\section{/homes/y1228774/\-O\-S/1\-A/src/mycompress.c File Reference}
+\label{mycompress_8c}\index{/homes/y1228774/\-O\-S/1\-A/src/mycompress.\-c@{/homes/y1228774/\-O\-S/1\-A/src/mycompress.\-c}}
+}
+
+
+Compresses a given input stream (stdin, file) and creates a new file of the form xxx.\-txt.\-comp with the output.  
+
+
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+{\ttfamily \#include $<$stdlib.\-h$>$}\\*
+{\ttfamily \#include $<$string.\-h$>$}\\*
+{\ttfamily \#include $<$errno.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{mycompress_8c_aeb94fbd457627182ceee7e505f432541}{cleanup} (void)
+\begin{DoxyCompactList}\small\item\em Closes streams when the program terminates. \end{DoxyCompactList}\item 
+void \hyperlink{mycompress_8c_ae8605e2b78cd4a81b6c6b5c30cb7366a}{usage} (void)
+\begin{DoxyCompactList}\small\item\em Prints the Synopsis for calling the program. \end{DoxyCompactList}\item 
+void \hyperlink{mycompress_8c_afb382d293c5a19314d80069aabf53ea3}{compress} (int $\ast$, int $\ast$)
+\begin{DoxyCompactList}\small\item\em Reads the stream, compresses while reading and writes to the output stream. \end{DoxyCompactList}\item 
+void \hyperlink{mycompress_8c_a7e4baaa93969a66458d037fb79c5b360}{open\-\_\-stream} (char $\ast$, char $\ast$)
+\begin{DoxyCompactList}\small\item\em Opens the input and output stream. \end{DoxyCompactList}\item 
+void \hyperlink{mycompress_8c_a94d7329ec5fec7321045d1b5e3b75aac}{output\-\_\-summary} (char $\ast$, char $\ast$, int, int)
+\begin{DoxyCompactList}\small\item\em Formats and prints the results of the compression. \end{DoxyCompactList}\item 
+int \hyperlink{mycompress_8c_a3c04138a5bfe5d72780bb7e82a18e627}{main} (int argc, char $\ast$$\ast$argv)
+\begin{DoxyCompactList}\small\item\em Program entry point. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{mycompress_8c_a3779fc8a5f1b1b8db21bda15d9cba17d}{const int {\bfseries S\-I\-G\-N\-\_\-\-M\-A\-X} = 9}\label{mycompress_8c_a3779fc8a5f1b1b8db21bda15d9cba17d}
+
+\item 
+\hypertarget{mycompress_8c_aad73ccafdb96b6eda42fd71c56cb2d33}{char $\ast$ {\bfseries pgm\-\_\-name}}\label{mycompress_8c_aad73ccafdb96b6eda42fd71c56cb2d33}
+
+\item 
+\hypertarget{mycompress_8c_a4d96af7dfe56f14549fbb9e17aec1bd1}{F\-I\-L\-E $\ast$ {\bfseries in\-\_\-stream}}\label{mycompress_8c_a4d96af7dfe56f14549fbb9e17aec1bd1}
+
+\item 
+\hypertarget{mycompress_8c_a5440539ac357ade5c1107a07903d94e9}{F\-I\-L\-E $\ast$ {\bfseries out\-\_\-stream}}\label{mycompress_8c_a5440539ac357ade5c1107a07903d94e9}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Compresses a given input stream (stdin, file) and creates a new file of the form xxx.\-txt.\-comp with the output. 
+\begin{DoxyItemize}
+\item 
+\begin{DoxyItemize}
+\item \begin{DoxyAuthor}{Author}
+Constantin Schiber, e1228774
+\begin{DoxyItemize}
+\item $\ast$
+\end{DoxyItemize}
+\end{DoxyAuthor}
+\begin{DoxyVerb}* @date 02.11.2014\end{DoxyVerb}
+
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+\subsection{Function Documentation}
+\hypertarget{mycompress_8c_aeb94fbd457627182ceee7e505f432541}{\index{mycompress.\-c@{mycompress.\-c}!cleanup@{cleanup}}
+\index{cleanup@{cleanup}!mycompress.c@{mycompress.\-c}}
+\subsubsection[{cleanup}]{\setlength{\rightskip}{0pt plus 5cm}void cleanup (
+\begin{DoxyParamCaption}
+\item[{void}]{}
+\end{DoxyParamCaption}
+)}}\label{mycompress_8c_aeb94fbd457627182ceee7e505f432541}
+
+
+Closes streams when the program terminates. 
+
+
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\hypertarget{mycompress_8c_afb382d293c5a19314d80069aabf53ea3}{\index{mycompress.\-c@{mycompress.\-c}!compress@{compress}}
+\index{compress@{compress}!mycompress.c@{mycompress.\-c}}
+\subsubsection[{compress}]{\setlength{\rightskip}{0pt plus 5cm}void compress (
+\begin{DoxyParamCaption}
+\item[{int $\ast$}]{in\-\_\-ccount, }
+\item[{int $\ast$}]{out\-\_\-ccount}
+\end{DoxyParamCaption}
+)}}\label{mycompress_8c_afb382d293c5a19314d80069aabf53ea3}
+
+
+Reads the stream, compresses while reading and writes to the output stream. 
+
+
+\begin{DoxyItemize}
+\item $\ast$
+\end{DoxyItemize}
+
+Reads the given input stream char by char, counts the occourences of the same char and writes the amount of
+\begin{DoxyItemize}
+\item occurences to the output stream when the next char is different from the previous.
+\begin{DoxyItemize}
+\item 
+\begin{DoxyParams}{Parameters}
+{\em in\-\_\-ccount} & A reference to the int that counts the amount of chars of the original file
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\\
+\hline
+{\em in\-\_\-ccount} & A reference to the int that counts the amount of chars of the compressed file \\
+\hline
+\end{DoxyParams}
+
+\end{DoxyItemize}
+\end{DoxyItemize}\hypertarget{mycompress_8c_a3c04138a5bfe5d72780bb7e82a18e627}{\index{mycompress.\-c@{mycompress.\-c}!main@{main}}
+\index{main@{main}!mycompress.c@{mycompress.\-c}}
+\subsubsection[{main}]{\setlength{\rightskip}{0pt plus 5cm}int main (
+\begin{DoxyParamCaption}
+\item[{int}]{argc, }
+\item[{char $\ast$$\ast$}]{argv}
+\end{DoxyParamCaption}
+)}}\label{mycompress_8c_a3c04138a5bfe5d72780bb7e82a18e627}
+
+
+Program entry point. 
+
+
+\begin{DoxyItemize}
+\item $\ast$ 
+\begin{DoxyParams}{Parameters}
+{\em argc} & The argument counter
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\\
+\hline
+{\em argv} & The argument vector
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+E\-X\-I\-T\-\_\-\-S\-U\-C\-C\-E\-S\-S on success, E\-X\-I\-T\-\_\-\-E\-R\-R\-O\-R in case of an error 
+\end{DoxyReturn}
+
+\end{DoxyItemize}\hypertarget{mycompress_8c_a7e4baaa93969a66458d037fb79c5b360}{\index{mycompress.\-c@{mycompress.\-c}!open\-\_\-stream@{open\-\_\-stream}}
+\index{open\-\_\-stream@{open\-\_\-stream}!mycompress.c@{mycompress.\-c}}
+\subsubsection[{open\-\_\-stream}]{\setlength{\rightskip}{0pt plus 5cm}void open\-\_\-stream (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{in\-\_\-name, }
+\item[{char $\ast$}]{out\-\_\-name}
+\end{DoxyParamCaption}
+)}}\label{mycompress_8c_a7e4baaa93969a66458d037fb79c5b360}
+
+
+Opens the input and output stream. 
+
+
+\begin{DoxyItemize}
+\item $\ast$
+\begin{DoxyItemize}
+\item 
+\begin{DoxyParams}{Parameters}
+{\em in\-\_\-name} & A reference to the name of the input stream
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\\
+\hline
+{\em out\-\_\-name} & A reference to the name of the output stream \\
+\hline
+\end{DoxyParams}
+
+\end{DoxyItemize}
+\end{DoxyItemize}\hypertarget{mycompress_8c_a94d7329ec5fec7321045d1b5e3b75aac}{\index{mycompress.\-c@{mycompress.\-c}!output\-\_\-summary@{output\-\_\-summary}}
+\index{output\-\_\-summary@{output\-\_\-summary}!mycompress.c@{mycompress.\-c}}
+\subsubsection[{output\-\_\-summary}]{\setlength{\rightskip}{0pt plus 5cm}void output\-\_\-summary (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{in\-\_\-name, }
+\item[{char $\ast$}]{out\-\_\-name, }
+\item[{int}]{in\-\_\-ccount, }
+\item[{int}]{out\-\_\-ccount}
+\end{DoxyParamCaption}
+)}}\label{mycompress_8c_a94d7329ec5fec7321045d1b5e3b75aac}
+
+
+Formats and prints the results of the compression. 
+
+
+\begin{DoxyItemize}
+\item $\ast$
+\begin{DoxyItemize}
+\item 
+\begin{DoxyParams}{Parameters}
+{\em in\-\_\-name} & A reference to the name of the input stream
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\\
+\hline
+{\em out\-\_\-name} & A reference to the name of the output stream
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\\
+\hline
+{\em in\-\_\-ccount} & The amount of chars in the original file
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}\\
+\hline
+{\em out\-\_\-ccount} & The amount of chars in the compressed file \\
+\hline
+\end{DoxyParams}
+
+\end{DoxyItemize}
+\end{DoxyItemize}\hypertarget{mycompress_8c_ae8605e2b78cd4a81b6c6b5c30cb7366a}{\index{mycompress.\-c@{mycompress.\-c}!usage@{usage}}
+\index{usage@{usage}!mycompress.c@{mycompress.\-c}}
+\subsubsection[{usage}]{\setlength{\rightskip}{0pt plus 5cm}void usage (
+\begin{DoxyParamCaption}
+\item[{void}]{}
+\end{DoxyParamCaption}
+)}}\label{mycompress_8c_ae8605e2b78cd4a81b6c6b5c30cb7366a}
+
+
+Prints the Synopsis for calling the program. 
+
+
+\begin{DoxyItemize}
+\item 
+\end{DoxyItemize}
