@@ -6,9 +6,12 @@ OBJECTFILES=server.c
 
 .PHONY: all clean
 
-all: server
+all: server client
 
 server: $(OBJECTFILES)
+	$(CC) $(CFLAGS) -o $@ $^
+
+client: client.c 
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c
