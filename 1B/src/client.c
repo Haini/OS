@@ -124,7 +124,6 @@ int main( int argc, char **argv )
 	int rv;
 	//int round = 0;
 	char s[30];
-	uint8_t buffer = 0;
 
 	memset (&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -181,9 +180,9 @@ int main( int argc, char **argv )
 	char result[] = {0,0};
 	char g_code[SLOTS] = {0};
 	char a_code[SLOTS] = {0};
-	char solution[SLOTS] = {255};
+	char solution[SLOTS];
 	char checked[SLOTS] = {0};
-	char incorrect[SLOTS] = {255};
+	char incorrect[SLOTS];
 
 	memset(solution, 255, SLOTS);
 	memset(checked, 0, SLOTS);
@@ -200,20 +199,84 @@ int main( int argc, char **argv )
 	while(round < 15)
 	{
 		round++;
-		(void)fprintf(stdout, "Code: %d %d %d %d\n", g_code[0], g_code[1], g_code[2], g_code[3], g_code[4]);
+		(void)fprintf(stdout, "Code: %d %d %d %d %d\n", g_code[0], g_code[1], g_code[2], g_code[3], g_code[4]);
 
 		/* Send the code to the server */
 		send_answer(&g_code[0]);
-		
+	
 		/* Receive answer from server */
-		recv(sockfd, &buffer, 1, 0); //Socket, TargetBuffer, Length, Flags
-		(void)fprintf(stdout, "Got byte 0x%d\n\n", buffer);
+		char buffer[1];
 
+		memset(buffer, 0, 2);
 
+		size_t r = recv(sockfd, &buffer[0], 1, 0);
+		
+		if(r < 0)
+		{
+			exit (EXIT_FAILURE);
+		}
 
+		(void)fprintf(stdout, "Got byte 0x%x\n", buffer[0]);
+
+		result[0] = buffer[0] & 0x7;	//Get black
+		result[1] = (buffer[0] & 0x38) >> 3;	//Get white
+
+		(void)fprintf(stdout, "Black sticks: 0x%x | White sticks: 0x%x\n", result[0], result[1]); 
+
+		char score = calculate_score(result[0], result[1]);
+
+		previous_answers[round - 1][0] = g_code[0];
+		previous_answers[round - 1][1] = g_code[1];
+		previous_answers[round - 1][2] = g_code[2];
+		previous_answers[round - 1][3] = g_code[3];
+		previous_answers[round - 1][4] = g_code[4];
+
+		previous_scores[round -1] = score;
+
+		if(result[0] == 4)
+			break;
+
+		int anySolution = 1;
+
+		while (anySolution >= 1)
+		{
+			int consistent = 1;
+			int i = 0;
+			for(i = 0; i < round; i++)
+			{
+				compute_answer(a_code, result, previous_answers[i]);
+				int test_score = calculate_score(result[0], result[1]);
+
+				//fprintf(stdout, "TestScore %d | PrevScore %d\n", test_score, previous_scores[i]);
+				if (test_score != previous_scores[i])
+				{
+					consistent = -1;
+					break;
+				}
+			}
+
+			if(consistent >= 1)
+				break;
+
+			base8counter(&a_code[0]);
+		
+			if(a_code[0] == 0 && a_code[1] == 0 && a_code[2] == 1 && a_code[3] == 1 && a_code[4] == 2)
+			{
+				anySolution = -1;
+				fprintf(stdout, "No solution\n");
+				exit (EXIT_FAILURE);
+			}
+		}
+		
+		memcpy(&g_code[0], &a_code[0], 5);
+
+		fprintf(stdout, "\n My best guess: %d %d %d %d %d \n", g_code[0], g_code[1], g_code[2], g_code[3], g_code[4]);
 	}
-	/* 2. Receive an answer */
 
+		if(result[0] == 4)
+		{
+			fprintf(stdout, "I win\n");
+		}
 
 }
 
@@ -226,8 +289,8 @@ static void usage(void)
 static void compute_answer(char* guess, char* result, char* secret)
 {
 	result[0] = 0;
-	result[1] = 1;
-	int colors_left[COLORS];
+	result[1] = 0;
+	char colors_left[COLORS];
 	//int guess[COLORS];
 	int blacks, whites;
 	int i, j;
@@ -257,7 +320,7 @@ static void compute_answer(char* guess, char* result, char* secret)
 			if (colors_left[guess[i]] > 0)
 			{
 				whites++;
-				colors_left[guess[j]]--;
+				colors_left[guess[i]]--;
 			}
 		}
 	}
@@ -317,29 +380,32 @@ static void base8counter(char num[SLOTS])
 				}
 				num[SLOTS-3] = 0;
 			}
-			num[SLOTS-4] = 0;
+			num[SLOTS-2] = 0;
 		}
-		num[SLOTS-5] = 0;
+		num[SLOTS-1] = 0;
 	}
 }
 
 static void send_answer(char* guess)
 {
 	/* To calculate the parity we xor all bits in 'guess'. The sign for xor is ^ */
-	uint8_t parity_calc = 0;
+	uint16_t parity_calc = 0;
 	
 	/* p c1 c2 c3 c4 c5 */
 	uint16_t answer;
 	
 
 
-	(void)fprintf(stdout, "Code: %d %d %d %d\n", guess[0], guess[1], guess[2], guess[3], guess[4]);
+//	(void)fprintf(stdout, "Code: %d %d %d %d %d\n", guess[0], guess[1], guess[2], guess[3], guess[4]);
 
 	/* convert my char array to uint16 for convenience */
-	uint16_t conv_guess = strtol(guess, NULL, 10);
+	uint16_t conv_guess = 0;
+	conv_guess <<= 15;
+	conv_guess |= (guess[4] << 12); conv_guess |= (guess[3] << 9); conv_guess |= (guess[2] << 6); conv_guess |= (guess[1] << 3);
+	conv_guess |= (guess[0]);
 	uint16_t conv_guess2 = conv_guess;
 	
-	fprintf(stdout, "My Guess: %d ... \n", conv_guess);
+//	fprintf(stdout, "My Guess: %x ... \n", conv_guess);
 
 	/* All classic counter variable */
 	int i;
@@ -348,17 +414,19 @@ static void send_answer(char* guess)
 	for (i = 0; i < SLOTS; ++i)
 	{
 		int tmp = conv_guess & 0x07;					//Cut out three bits
-		parity_calc ^=	tmp ^ (tmp >> 1) ^ (tmp >>2);	//Do XOR on the three bits and the result from the past
+		parity_calc ^=	tmp ^ (tmp >> 1) ^ (tmp >> 2);	//Do XOR on the three bits and the result from the past
 		conv_guess >>= SHIFT_WIDTH;						//Shift out the three bits that have already been XORed
 	}
 
 	parity_calc &= 0x1;	//Oh Garry, why?
 
-	parity_calc <<= 15; //Shift to the outer right because I am cool. P|lll mmm nnn vvv rrr
+	parity_calc = parity_calc << 15; //Shift to the outer right because I am cool. P|lll mmm nnn vvv rrr
+	
+//	fprintf(stdout, "Parity bit: %x\n", parity_calc);
 
 	answer = conv_guess2 | parity_calc; //Put together the pieces 
 	
-	fprintf(stdout, "Try to send following code 0x%x ...\n", answer);
+//	fprintf(stdout, "Try to send following code 0x%x ...\n", answer);
 
 	if ((send(sockfd, &answer, 2, 0)) == -1) 	//Socket, *buf with content, 2 Bytes are sent, no flags are set
 	{
@@ -366,6 +434,6 @@ static void send_answer(char* guess)
 		perror ("Send:");
 		exit (EXIT_FAILURE);
 	}
-
+//
 	fprintf(stdout, "Sent the code successfully ... \n");
 }
