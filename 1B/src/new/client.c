@@ -1,7 +1,9 @@
-/*
- *
- *
- *
+/**
+ *  @file client.c
+ *  @author Constantin Schieber, e1228774
+ *  @brief Client for playing the Mastermind game (even with algorithmus)
+ *  @details Can solve the games in approximate 8 turns!!!!1111elf
+ *  @date 07.11.2014
  * */
 
 
@@ -66,11 +68,13 @@ volatile sig_atomic_t terminating = 0;
 
 /* ==== Constructors === */
 
+/* A node for a list */
 struct node {
 	uint16_t val;
 	struct node *next;
 };
 
+/* The root of the lists (Later more a head than a root..) */
 struct node *root_all, *root_sel, *curr;
 
 /* === Prototypes === */
@@ -254,7 +258,7 @@ static void remove_guesses(uint8_t *answer, uint8_t *guess)
 
 		uint8_t result[1];
 
-		compute_answer(curr->val, &result[0], secret);
+		(void)compute_answer(curr->val, &result[0], secret);
 		
 		if(result[0] == answer[0])
 		{
@@ -262,7 +266,7 @@ static void remove_guesses(uint8_t *answer, uint8_t *guess)
 			curr_sel->val = curr->val;
 			curr_sel->next = root_sel;
 			root_sel = curr_sel;
-			count++;
+			//count++;
 		}
 
 		curr=curr->next;
@@ -318,7 +322,7 @@ static void bail_out(int eval, const char *fmt, ...)
 
 static void free_resources(void)
 {
-
+	//Clear list
 	curr = root_all;
 
 	while(curr)
@@ -476,11 +480,13 @@ int main(int argc, char*argv[])
 		proceed++;
 
 		(void)write_to_server(sockfd, &send_buffer[0], WRITE_BYTES);
-		fprintf(stdout, "Code that was sent: 0x%x 0x%x\n", send_buffer[0], send_buffer[1]);
+		(void)fprintf(stdout, "Code that was sent: 0x%x 0x%x\n", send_buffer[0], send_buffer[1]);
 		
 		/* Read and interpret reply from server */
 		(void)read_from_server(sockfd, &recv_buffer[0], READ_BYTES);
 		
+
+		/* I don't know why, but recv_buffer gehts overwritten by the bit operations, so put it in temp*/
 		temp[0] = recv_buffer[0];
 
 		g_result[0] = (recv_buffer[0] & 0x7);
@@ -520,13 +526,14 @@ int main(int argc, char*argv[])
 
 			uint8_t secret[SLOTS];
 
-			for(int i = 4; i >= 0; i--)
+			for(int i = 0; i <= 4; i++)
 			{
 				secret[i] = (((response) & (7 << (3*i))) >> (3*i));
-				fprintf(stdout, "%d - ", secret[i]);
+				(void)fprintf(stdout, "%d - ", secret[i]);
 			}
 
-			fprintf(stdout, "\nGespielte Runden: %d \n", proceed);
+			(void)fprintf(stdout, "\nGespielte Runden: %d \n", proceed);
+			
 
 			return EXIT_SUCCESS;
 			

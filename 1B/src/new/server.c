@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 	struct addrinfo *ai, *aip;
 	struct sockaddr_storage their_addr;	
 	socklen_t addr_size;	
-	int socketfd, res, yes = 1;
+	int res, yes = 1;
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_INET;
@@ -403,7 +403,10 @@ int main(int argc, char *argv[])
 			bytes_sent += s;
 		} while (bytes_sent < WRITE_BYTES);*/
 		
-		write(connfd, &buffer[0], sizeof(buffer[0]));
+		if((error =	write(connfd, &buffer[0], sizeof(buffer[0]))) == -1)
+		{
+			bail_out(EXIT_FAILURE, "Write to client: ");
+		}
 
 		/* === MEINS ENDE === */
 
