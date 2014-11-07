@@ -91,7 +91,7 @@ static uint16_t calc_parity(uint16_t buffer);
  * @param n Size to write
  * @return Pointer to buffer on success, else NULL
  */
-static uint16_t *write_to_server(int sockfd_con, uint16_t *buffer, size_t n);
+static uint8_t *write_to_server(int sockfd_con, uint8_t *buffer, size_t n);
 
 /*
  * @brief Read message from socket
@@ -116,13 +116,13 @@ static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret);
  * @param answer Contains the answer by the server
  * @param guess Contains the old guess
  */
-static void remove_guesses(uint8_t *answer, uint16_t *guess);
+static void remove_guesses(uint8_t *answer, uint8_t *guess);
 
 /**
  * @brief Get the next guess
  * @param guess Reference to an uint16_t where I store the answer
  */
-static void get_next_guess(uint16_t *guess);
+static void get_next_guess(uint8_t *guess);
 
 /**
  * @brief terminate program on program error
@@ -164,14 +164,14 @@ static uint16_t calc_parity(uint16_t buffer)
 	return parity_calc; 
 }
 
-static uint16_t *write_to_server(int sockfd_con, uint16_t *buffer, size_t n)
+static uint8_t *write_to_server(int sockfd_con, uint8_t *buffer, size_t n)
 {
 	
-	uint16_t parity_bit = calc_parity(*buffer);
+	//uint16_t parity_bit = calc_parity(*buffer);
 	
-	uint16_t answer = ((*buffer) | parity_bit);
+	//uint16_t answer = ((*buffer) | parity_bit);
 	
-	size_t r = send(sockfd_con, &answer, n, 0);
+	size_t r = send(sockfd_con, buffer, n, 0);
 
 	if(r == -1) {
 		bail_out(EXIT_FAILURE, "Error while writing to server\n");
@@ -182,7 +182,7 @@ static uint16_t *write_to_server(int sockfd_con, uint16_t *buffer, size_t n)
 
 static uint8_t *read_from_server(int sockfd_con, uint8_t *buffer, size_t n)
 {
-	size_t r = recv(sockfd, &buffer[0], n, 0);
+	size_t r = recv(sockfd, buffer, n, 0);
 
 	if(r == -1) {
 		bail_out(EXIT_FAILURE, "Error while reading from server\n");
@@ -234,14 +234,16 @@ static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret)
 	return red;
 }
 
-static void remove_guesses(uint8_t *answer, uint16_t *guess)
+static void remove_guesses(uint8_t *answer, uint8_t *guess)
 {
+	uint16_t response = (guess[1] << 8) + guess[0];
+
 	uint8_t secret[SLOTS];
-	uint8_t result[1];
+//	int count = 0;
 
 	for(int i = 4; i >= 0; i--)
 	{
-		secret[i] = (((*guess) & (7 << (3*i))) >> (3*i));
+		secret[i] = (((response) & (7 << (3*i))) >> (3*i));
 	}
 
 	curr = root_all;
@@ -249,22 +251,28 @@ static void remove_guesses(uint8_t *answer, uint16_t *guess)
 
 	while(curr)
 	{
-		compute_answer(curr->val, &result[0], secret);
 
-		if(result[0] == *answer)
+		uint8_t result[1];
+
+		compute_answer(curr->val, &result[0], secret);
+		
+		if(result[0] == answer[0])
 		{
 			curr_sel = (struct node*)malloc(sizeof(struct node*));
 			curr_sel->val = curr->val;
 			curr_sel->next = root_sel;
 			root_sel = curr_sel;
+			count++;
 		}
 
 		curr=curr->next;
 	}
 
+//	fprintf(stdout, "Found answers: %d\n", count);
 	/*remove all the things*/
 
 	curr = root_all;
+
 	while(curr)
 	{
 		struct node *next = curr->next;
@@ -276,12 +284,17 @@ static void remove_guesses(uint8_t *answer, uint16_t *guess)
 	root_sel = NULL;
 }
 
-static void get_next_guess(uint16_t *guess)
+static void get_next_guess(uint8_t *guess)
 {
 	uint16_t top = root_all->val;
-	top |= calc_parity(top);
 
-	*guess = top;
+	top = top + calc_parity(top);
+	guess[1] = (top >> 8);
+	guess[0] = (top & 255);
+
+//	top |= calc_parity(top);
+
+	//*guess = top;
 }
 
 static void bail_out(int eval, const char *fmt, ...)
@@ -305,6 +318,16 @@ static void bail_out(int eval, const char *fmt, ...)
 
 static void free_resources(void)
 {
+
+	curr = root_all;
+
+	while(curr)
+	{
+		struct node *next = curr->next;
+		free(curr);
+		curr = next;
+	}
+
 	sigset_t blocked_signals;
 	(void) sigfillset(&blocked_signals);
 	(void) sigprocmask(SIG_BLOCK, &blocked_signals, NULL);
@@ -333,6 +356,7 @@ static void signal_handler(int sig)
 	exit(EXIT_SUCCESS);
 }
 
+/* Resolve address */
 void *get_in_addr(struct sockaddr *sa)
 {
 	if (sa->sa_family == AF_INET) {
@@ -356,7 +380,7 @@ int main(int argc, char*argv[])
 	sigset_t blocked_signals;
 
 	/* Check arguments */
-	if(argc < 3)
+	if(argc != 3)
 	{
 		bail_out(EXIT_FAILURE, "Usage: %s <server-hostname> <server-port>", progname);
 	}
@@ -416,7 +440,7 @@ int main(int argc, char*argv[])
 		}
 
 		/* Establish connection */
-		if(connect(sockfd, rp->ai_addr, rp->ai_addrlen) == -1)
+		if((s = connect(sockfd, rp->ai_addr, rp->ai_addrlen)) == -1)
 		{
 			close(sockfd);
 			perror("client: connect");
@@ -426,31 +450,47 @@ int main(int argc, char*argv[])
 		/* If we didn't already hit a continue we are good to go and will have an open connection */
 		break;
 	}
+	
+	if(s == -1)
+		bail_out(EXIT_FAILURE, "Couldn't connect to server");
 
 	inet_ntop (rp->ai_family, get_in_addr((struct sockaddr *)rp->ai_addr), resolve, sizeof(resolve));
 
 	/* Now the logic part */
 	int proceed = 1;
 
-	uint16_t send_buffer = 87; //00123 for the first guess
+	//uint16_t send_buffer = 83; //00123 for the first guess
+
+	uint8_t send_buffer[2];
+	send_buffer[1] = 0;
+	send_buffer[0] = 83;
+
 	uint8_t recv_buffer[1];
 	char g_result[1]; //0 black, 1 whites
 
 
-	while(proceed < 35)
+	uint8_t temp[1];
+
+	while(proceed <= 35 && root_all != NULL)
 	{
 		proceed++;
 
-		(void)write_to_server(sockfd, &send_buffer, WRITE_BYTES);
-		fprintf(stdout, "Code that was sent: 0x%x\n", send_buffer);
-
+		(void)write_to_server(sockfd, &send_buffer[0], WRITE_BYTES);
+		fprintf(stdout, "Code that was sent: 0x%x 0x%x\n", send_buffer[0], send_buffer[1]);
+		
 		/* Read and interpret reply from server */
 		(void)read_from_server(sockfd, &recv_buffer[0], READ_BYTES);
 		
+		temp[0] = recv_buffer[0];
+
 		g_result[0] = (recv_buffer[0] & 0x7);
 		g_result[1] = (recv_buffer[0] >> 3) & 0x7;
-		fprintf(stdout, "Black: %d | White: %d\n", g_result[0], g_result[1]);
+		
+	
+		//fprintf(stdout, "Black: %d | White: %d\n", g_result[0], g_result[1]);
 
+		//recv_buffer[0] |= (1 << 6);
+		
 		switch(recv_buffer[0]>>6)
 		{
 			case 1:
@@ -465,10 +505,34 @@ int main(int argc, char*argv[])
 			default:
 				break;
 		}
-		/* No errors, now minimize our list of possible guesses based on our last guess and the answer (Knuth) */
-		(void)remove_guesses(&recv_buffer[0], &send_buffer);
-		(void)get_next_guess(&send_buffer);
 
+		/* No errors, now minimize our list of possible guesses based on our last guess and the answer (Knuth) */
+		(void)remove_guesses(&temp[0], &send_buffer[0]);
+		/* Get simply the top of the new list */
+		(void)get_next_guess(&send_buffer[0]);
+		
+		/* If we have 5 correct SLOTS we win */
+		if(g_result[0] >= SLOTS)
+		{
+			//fprintf(stdout, "Gewonnen!\n");
+
+			uint16_t response = (send_buffer[1] << 8) + send_buffer[0];
+
+			uint8_t secret[SLOTS];
+
+			for(int i = 4; i >= 0; i--)
+			{
+				secret[i] = (((response) & (7 << (3*i))) >> (3*i));
+				fprintf(stdout, "%d - ", secret[i]);
+			}
+
+			fprintf(stdout, "\nGespielte Runden: %d \n", proceed);
+
+			return EXIT_SUCCESS;
+			
+		}	
 	}
+
+	bail_out(EXIT_FAILURE, "Something with the list went terribly wrong");
 	
 }
