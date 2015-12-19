@@ -1,0 +1,81 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BUFFER_BYTES	client.c	25;"	d	file:
+BUFFER_BYTES	server.c	44;"	d	file:
+COLORS	client.c	21;"	d	file:
+COLORS	server.c	40;"	d	file:
+COUNT_OF	client.c	48;"	d	file:
+COUNT_OF	server.c	65;"	d	file:
+DEBUG	client.c	42;"	d	file:
+DEBUG	client.c	44;"	d	file:
+DEBUG	server.c	59;"	d	file:
+DEBUG	server.c	61;"	d	file:
+EXIT_GAME_LOST	client.c	31;"	d	file:
+EXIT_GAME_LOST	server.c	50;"	d	file:
+EXIT_MULTIPLE_ERRORS	client.c	32;"	d	file:
+EXIT_MULTIPLE_ERRORS	server.c	51;"	d	file:
+EXIT_PARITY_ERROR	client.c	30;"	d	file:
+EXIT_PARITY_ERROR	server.c	49;"	d	file:
+GAME_LOST_ERR_BIT	client.c	28;"	d	file:
+GAME_LOST_ERR_BIT	server.c	47;"	d	file:
+LISTEN_BACKLOG	client.c	34;"	d	file:
+LISTEN_BACKLOG	server.c	53;"	d	file:
+MAXDATASIZE	client.c	35;"	d	file:
+MAX_TRIES	client.c	19;"	d	file:
+MAX_TRIES	server.c	38;"	d	file:
+PARITY_ERR_BIT	client.c	27;"	d	file:
+PARITY_ERR_BIT	server.c	46;"	d	file:
+READ_BYTES	client.c	23;"	d	file:
+READ_BYTES	server.c	42;"	d	file:
+SHIFT_WIDTH	client.c	26;"	d	file:
+SHIFT_WIDTH	server.c	45;"	d	file:
+SLOTS	client.c	20;"	d	file:
+SLOTS	server.c	39;"	d	file:
+WRITE_BYTES	client.c	24;"	d	file:
+WRITE_BYTES	server.c	43;"	d	file:
+bail_out	client.c	/^static void bail_out(int exitcode, const char *fmt, ...)$/;"	f	file:
+bail_out	server.c	/^static void bail_out(int exitcode, const char *fmt, ...)$/;"	f	file:
+beige	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
+black	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
+calculate_colors	client.c	/^static void calculate_colors(uint16_t *message)$/;"	f	file:
+compute_answer	client.c	/^static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret)$/;"	f	file:
+compute_answer	server.c	/^static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret)$/;"	f	file:
+connfd	client.c	/^static int connfd = -1;$/;"	v	file:
+connfd	server.c	/^static int connfd = -1;$/;"	v	file:
+curr	client.c	/^struct node *root_all, *root_sel, *curr;$/;"	v	typeref:struct:
+darkblue	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
+free_resources	client.c	/^static void free_resources(void)$/;"	f	file:
+free_resources	server.c	/^static void free_resources(void)$/;"	f	file:
+green	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
+hostname	client.c	/^    char* hostname;$/;"	m	struct:opts	file:
+main	client.c	/^int main(int argc, char *argv[]) $/;"	f
+main	server.c	/^int main(int argc, char *argv[])$/;"	f
+next	client.c	/^    struct node *next;$/;"	m	struct:node	typeref:struct:node::node	file:
+node	client.c	/^struct node {$/;"	s	file:
+opts	client.c	/^struct opts {$/;"	s	file:
+opts	server.c	/^struct opts {$/;"	s	file:
+orange	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
+parse_args	client.c	/^static void parse_args(int argc, char **argv, struct opts *options)$/;"	f	file:
+parse_args	server.c	/^static void parse_args(int argc, char **argv, struct opts *options)$/;"	f	file:
+portno	client.c	/^    int portno;$/;"	m	struct:opts	file:
+portno	server.c	/^    long int portno;$/;"	m	struct:opts	file:
+progname	client.c	/^static const char *progname = "server"; \/* default name *\/$/;"	v	file:
+progname	server.c	/^static const char *progname = "server"; \/* default name *\/$/;"	v	file:
+quit	client.c	/^volatile sig_atomic_t quit = 0;$/;"	v
+quit	server.c	/^volatile sig_atomic_t quit = 0;$/;"	v
+read_from_client	server.c	/^static uint8_t *read_from_client(int fd, uint8_t *buffer, size_t n)$/;"	f	file:
+red	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
+remove_guesses	client.c	/^static void remove_guesses(uint8_t s_answer, uint16_t c_guess) {$/;"	f	file:
+root_all	client.c	/^struct node *root_all, *root_sel, *curr;$/;"	v	typeref:struct:node
+root_sel	client.c	/^struct node *root_all, *root_sel, *curr;$/;"	v	typeref:struct:
+secret	server.c	/^    uint8_t secret[SLOTS];$/;"	m	struct:opts	file:
+signal_handler	server.c	/^static void signal_handler(int sig)$/;"	f	file:
+sockfd	client.c	/^static int sockfd = -1;$/;"	v	file:
+sockfd	server.c	/^static int sockfd = -1;$/;"	v	file:
+val	client.c	/^    uint16_t val;$/;"	m	struct:node	file:
+violet	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
+white	client.c	/^enum { beige, darkblue, green, orange, red, black, violet, white };$/;"	e	enum:__anon1	file:
