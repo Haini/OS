@@ -1,0 +1,248 @@
+/*
+ * @file client.c
+ * @author Constantin Schieber, e1228774
+ * @brief Client that plays Mastermind with a server
+ * @details Connects to a given address and plays Mastermind against a server
+ * @date 03.11.2014
+ * */
+
+
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+
+/* === Constants === */
+#define SLOTS (5)
+#define COLORS (8)
+#define MAX_TRIES (35)
+
+/* === Macros === */
+
+/* === Global Variables === */
+
+/* Name of the program */
+static const char *progname = "client"; /* default name */
+
+/* File descriptor for client socket */
+static int sockfd = -1;
+
+/* File descriptor for connection socket */
+static int connfd = -1;
+
+/* This variable is set to ensure cleanup is performed only once */
+volatile sig_atomic_t terminating = 0;
+
+/* === Type Definitions === */
+
+/* === Prototypes === */
+
+
+/**
+ *  @brief Prints how to call this program
+ */
+static void usage(void)
+
+
+/**
+ *  @brief Computes how many black and whites are in the guess
+ *  @param huess The guess of my program
+ *  @param result Reference to to a result
+ *  @param secret The secret code my function checks with
+ *  @return Returns amount of black and whites
+ *  */
+static void compute_answer(uint8_t guess, uint8_t *result, uint8_t secret);
+
+
+/**
+ *  @brief Calculates a score based on how many blacks and whites are contained in my guess
+ *  @param black Amount of blacks
+ *  @param white Amount of whites
+ *  @return Returns black and whites
+ */
+static int calculate_score(uint8_t black, uint8_t white);
+
+/**
+ *  @brief A counter that just counts in the octal number system
+ *  @param num Contains the current counter value that has to be increased
+ */
+static void base8counter(char num[4]);
+
+/**
+ * @brief Program entry point
+ * @param argc The argument counter
+ * @param argv The argument vector
+ * @return EXIT_SUCCESS on success, EXIT_ERROR in case of an error
+ * */
+int main( int argc, char **argv )
+{	
+	/* There shall not be an other argc than 3 */
+	if (argc != 3)
+	{
+		usage();
+		exit (EXIT_FAILURE);
+	}
+	
+	/* Establish a connection */
+	int sockfd, numbytes;
+	char buffer[MAXDATASIZE];
+	struct addrinfo hints, *serverinfo, *p;
+	int rv;
+	int round = 0;
+
+	memset (&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	/* Resolve hostname via getaddrinfo */
+	if ((rv = getadrrinfo (argv[1], argv[2], &hints, &serverinfo)) != 0)
+	{
+		fprintf (stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+		exit (EXIT_FAILURE);
+	}
+
+	/* Loop trough addrinfo structures, use the first where we succeed to establish a connection */
+	for (p = servinfo; p != NULL; p = p->ai_next) 
+	{
+		/* Create a socket */
+		if ((sockfd = socket(p->ai_family, p->ai_socktype, p-> ai_protocoll)) == -1)
+		{
+			perror("client: socket");
+			continue;
+		}
+		
+		/* Establish a Connection */
+		if (connect (sockfd, p->ai_addr, p->ai_addrlen) == -1)
+		{
+			close (sockfd);
+			perror ("client: connect");
+			continue;
+		}
+		
+		/* If we didn't already hit a continue we are good to go and will have a open connection */
+		break;
+	}
+	
+	/* Well, something can go wrong all the time */
+	if (p == NULL)
+	{
+		fprintf(stderr, "client: failed to connect\n");
+		return 2;
+	}
+
+	inet_ntop (p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof(s));
+	printf("client: connecting to %s\n", s);
+
+	freeaddrinfo (servinfo); //all done with this structure
+
+	/* Now things get a little bit more serious, we need to send stuff to our server */
+		
+
+
+}
+
+
+static void usage(void)
+{
+	(void) fprintf(stderr, "Usage: %s <server-hostname> <server-port>", progname);
+}
+
+static void compute_answer(char* guess, char* result, char* secret)
+{
+	result[0] = 0;
+	result[1] = 1;
+	int colors_left[COLORS];
+	int guess[COLORS];
+	int blacks, whites;
+	int i, j;
+	
+	(void) memset(&colors_left[0], 0, sizeof(colors_left));
+	blacks = whites = 0;
+	/* Check for black sticks */
+	for(i = 0; i < SLOTS; ++i)
+	{
+		if(guess[i] == secret[i])
+		{
+			blacks++;
+		}
+		else
+		{
+			colors_left[secret[i]]++; //Set index of secret to 1 to check back later
+		}
+	}
+
+	/* Check for white sticks but ignore the ones that are already black */
+	for(i = 0; i < SLOTS; ++i)
+	{
+		/* not marked as blacks */
+		if (guess[i] != secret[i])
+		{
+			/* Check if this color did occour, if so then count whites up and remove the color from the pool */
+			if (colors_left[guess[i]] > 0)
+			{
+				whites++;
+				colors_left[guess[j]]--;
+			}
+		}
+	}
+	
+	/* Pass the return value by reference*/
+	result[0] = blacks;
+	result[1] = whites;
+}
+
+static int calculate_score(uint8_t black, uint8_t white)
+{
+	if(black == 0 && white == 0) return 0;
+	if(black == 0 && white == 1) return 1;
+	if(black == 1 && white == 0) return 2;
+	if(black == 0 && white == 2) return 3;
+	if(black == 1 && white == 1) return 4;
+	if(black == 2 && white == 0) return 5;
+	if(black == 0 && white == 3) return 6;
+	if(black == 1 && white == 2) return 7;
+	if(black == 2 && white == 1) return 8;
+	if(black == 3 && white == 0) return 9;
+	if(black == 0 && white == 4) return 10;
+	if(black == 1 && white == 3) return 11;
+	if(black == 2 && white == 2) return 12;
+	if(black == 4 && white == 0) return 13;
+
+	if(black == 0 && white == 5) return 14;
+	if(black == 1 && white == 4) return 15;
+	if(black == 2 && white == 3) return 16;
+	if(black == 3 && white == 2) return 17;
+	if(black == 4 && white == 1) return 18;
+	if(black == 5 && white == 0) return 19;
+}
+
+static void base8counter(char num[SLOTS])
+{
+	num[SLOTS-1]++;
+	if(num[SLOTS-1] == 8)
+	{
+		num[SLOTS-2]++;
+		if(num[SLOTS-2] == 8)
+		{
+			num[SLOTS-3]++;
+			if(num[SLOTS-3] == 8)
+			{
+				num[SLOTS-4]++;
+				if(num[SLOTS-4] == 8)
+				{
+					num[SLOTS-5]++;
+					if(num[SLOTS-5] == 8)
+					{
+						num[SLOTS-5] = 0;
+					}
+					num[SLOTS-4] = 0;
+				}
+				num[SLOTS-3] = 0;
+			}
+			num[SLOTS-4] = 0;
+		}
+		num[SLOTS-5] = 0;
+	}
+}
