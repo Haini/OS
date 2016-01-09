@@ -1,0 +1,48 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CC	Makefile	/^CC=gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS=-Wall -g -std=c99  -pedantic -pthread -lrt $(DEFS)$/;"	m
+ClientList	server_hangman.c	/^struct ClientList {$/;"	s	file:
+DEBUG	server_hangman.c	29;"	d	file:
+DEBUG	server_hangman.c	31;"	d	file:
+DEFS	Makefile	/^DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -DENDEBUG$/;"	m
+GameState	server_hangman.c	/^struct GameState {$/;"	s	file:
+MAX_DATA	common_hangman.h	1;"	d
+PERMISSION	common_hangman.h	2;"	d
+SHM_NAME	common_hangman.h	4;"	d
+S_CLIENT	common_hangman.h	6;"	d
+S_RETURN	common_hangman.h	7;"	d
+S_SERVER	common_hangman.h	5;"	d
+WordList	server_hangman.c	/^struct WordList {$/;"	s	file:
+bail_out	server_hangman.c	/^static void bail_out(int exitcode, const char *fmt, ...)$/;"	f	file:
+c_guess	common_hangman.h	/^    char c_guess;              \/* New guess by client. *\/$/;"	m	struct:myshm
+client_list	server_hangman.c	/^static struct ClientList *client_list;  $/;"	v	typeref:struct:ClientList	file:
+current_game	server_hangman.c	/^    struct GameState current_game; $/;"	m	struct:ClientList	typeref:struct:ClientList::GameState	file:
+free_resources	server_hangman.c	/^static void free_resources() $/;"	f	file:
+get_strings	server_hangman.c	/^static char *get_strings() $/;"	f	file:
+in_stream	server_hangman.c	/^static FILE *in_stream;$/;"	v	file:
+main	client_hangman.c	/^int main(int argc, char *argv[])  $/;"	f
+main	server_hangman.c	/^int main(int argc, char *argv[])  $/;"	f
+myshm	common_hangman.h	/^struct myshm {$/;"	s
+next	server_hangman.c	/^    struct ClientList *next; $/;"	m	struct:ClientList	typeref:struct:ClientList::ClientList	file:
+next	server_hangman.c	/^    struct WordList *next;$/;"	m	struct:WordList	typeref:struct:WordList::WordList	file:
+progname	server_hangman.c	/^static const char *progname = "server"; \/* default name *\/$/;"	v	file:
+read_dict	server_hangman.c	/^static void read_dict()$/;"	f	file:
+s_client	server_hangman.c	/^static sem_t *s_client;  $/;"	v	file:
+s_errors	common_hangman.h	/^    uint8_t s_errors;          \/* Amount of errors that were already made. *\/$/;"	m	struct:myshm
+s_id	common_hangman.h	/^    int s_id;                  \/* ID of the player. *\/$/;"	m	struct:myshm
+s_return	server_hangman.c	/^static sem_t *s_return;  $/;"	v	file:
+s_server	server_hangman.c	/^static sem_t *s_server;  $/;"	v	file:
+s_word	common_hangman.h	/^    char s_word[MAX_DATA];     \/* The partly correct word. *\/$/;"	m	struct:myshm
+secret_word	server_hangman.c	/^   char *secret_word;$/;"	m	struct:GameState	file:
+server_id	server_hangman.c	/^    int server_id;$/;"	m	struct:ClientList	file:
+shared	server_hangman.c	/^static struct myshm *shared;  $/;"	v	typeref:struct:myshm	file:
+string	server_hangman.c	/^static char *string;$/;"	v	file:
+strings	server_hangman.c	/^    free(strings);$/;"	v
+strings	server_hangman.c	/^static char **strings = NULL;$/;"	v	file:
+used_words	server_hangman.c	/^    struct WordList *used_words;$/;"	m	struct:ClientList	typeref:struct:ClientList::WordList	file:
+word	server_hangman.c	/^    char *word;$/;"	m	struct:WordList	file:
