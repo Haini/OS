@@ -1,4 +1,5 @@
 *.pdf
+*.sh
 *.py
 *.html
 *.htm
