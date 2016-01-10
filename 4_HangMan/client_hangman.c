@@ -2,8 +2,8 @@
  *  @file client_hangman.c
  *  @author Constantin Schieber, e1228774
  *  @brief client
- *  @details 
- *  @date
+ *  @details GameLogic for Hangman
+ *  @date 12.01.2016
  * */
 
 #include <stdio.h>
@@ -32,7 +32,6 @@
 #define DEBUG(...)
 #endif
 
-
 /* === Structures === */
 
 /* === Global Variables === */
@@ -40,28 +39,28 @@
 /** @brief Name of the program. */
 static const char *progname = "client"; /* default name */
 
-/** @brief */
+/** @brief Contains the game state of ONE client at a time. */
 static struct Myshm *shared;  
 
-/** @brief */
+/** @brief Server can access SHM, controlled exclusive by clients. */
 static sem_t *s_server;  
 
-/** @brief */
+/** @brief ONE client can access SHM, controlled by server / clients. */
 static sem_t *s_client;  
 
-/** @brief */
+/** @brief Server tells a waiting client that it can access it's answer now. */ 
 static sem_t *s_return;  
 
-/** @brief */
+/** @brief Unique ID, gets set by server. */
 static int client_id = -1;  
 
-/** @brief */
+/** @brief How many games were won. */
 static uint8_t win_cnt = 0; 
 
-/** @brief */
+/** @brief How many games were lost. */
 static uint8_t loss_cnt = 0; 
 
-/** @brief */
+/** @brief Regular, well defined termination. */
 static char regular_exit = -1; 
 
 /** @brief Indicates wether SIGTERM OR SIGINT got set. */
@@ -71,15 +70,14 @@ volatile sig_atomic_t want_quit = 0;
 
 /**
  * @brief Catches SIGINT & SIGTERM for gracefull termination 
- * @param 
- * @return 
+ * @param signal Signal from Sigaction
 **/
 static void signal_handler(int signal);
 
 /**
  * @brief Terminates the program gracefully
- * @param 
- * @return 
+ * @param exitcode The Exitcode 
+ * @param fmt format string
 **/
 static void bail_out(int exitcode, const char *fmt, ...);
 
@@ -90,8 +88,9 @@ static void bail_out(int exitcode, const char *fmt, ...);
 static void free_resources();
 
 /**
- * @brief Frees resources on exit 
- * @return void
+ * @brief Hangs poor Mr. ASCII, based on errors. 
+ * @param errors Errors that were made during the guessing
+ * @return void 
 **/
 static void hang_him(uint8_t errors);
 
@@ -154,16 +153,16 @@ static void free_resources()
 			(void) fprintf(stderr, "%s: munmap: %s\n", progname, strerror(errno));
 		}
 	}
-	
-	if (sem_close(s_server) == -1) {
+    
+    if (s_server != NULL && sem_close(s_server) == -1) {
         (void) fprintf(stderr, "%s: sem_close on %s: %s\n", progname,S_SERVER , strerror(errno));
     }
 
-	if (sem_close(s_client) == -1) {
+	if (s_client != NULL && sem_close(s_client) == -1) {
         (void) fprintf(stderr, "%s: sem_close on %s: %s\n", progname, S_CLIENT, strerror(errno));
     }
 
-	if (sem_close(s_return) == -1) {
+	if (s_return != NULL && sem_close(s_return) == -1) {
         (void) fprintf(stderr, "%s: sem_close on %s: %s\n", progname, S_RETURN, strerror(errno));
     }
 }
@@ -291,13 +290,28 @@ static void hang_him(uint8_t errors) {
 **/
 int main(int argc, char *argv[])  
 {
-    uint8_t errors = 0;
-    int shmfd;
-    char guess = 0;
-    char server_answer[MAX_DATA];
-    char chars_guessed[ALPHABET_CNT];
-    
+    int shmfd; 
+    uint8_t errors = 0;                 /* Errors made by user. */
+    char guess = 0;                     /* Guess of the user. */
+    char server_answer[MAX_DATA];       /* Contains answer from server. */
+    char chars_guessed[ALPHABET_CNT];   /* Contains already guessed chars. */
+    enum StatusID status_id = CreateGame; /* Represents current game status. */
+   
+    /* Handle input. */
+    if (argc > 0) {
+        progname = argv[0];
+    }
+
+    if (argc >= 2) {
+        fprintf(stderr, "USAGE: %s", progname);
+        exit(EXIT_FAILURE);
+    }
+
     if (memset(chars_guessed, '0', ALPHABET_CNT) != chars_guessed) {
+        bail_out(EXIT_FAILURE, "memset(3) failed");
+    }
+    
+    if (memset(server_answer, '\0', MAX_DATA) != server_answer) {
         bail_out(EXIT_FAILURE, "memset(3) failed");
     }
 
@@ -315,10 +329,6 @@ int main(int argc, char *argv[])
             bail_out(EXIT_FAILURE, "sigaction");
         }
     }
-
-    //atexit(free_resources);
-
-    enum StatusID status_id = CreateGame;
 
     /* Open a new Shared Memory Object (shm_open) */
     shmfd = shm_open(SHM_NAME, O_RDWR, PERMISSION);

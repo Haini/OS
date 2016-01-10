@@ -2,8 +2,8 @@
  *  @file server_hangman.c
  *  @author Constantin Schieber, e1228774
  *  @brief server 
- *  @details
- *  @date 
+ *  @details Handles the gamestate of clients
+ *  @date 12.01.2016
  * */
 
 #include <stdio.h>
@@ -73,22 +73,22 @@ static uint8_t dict_size;
 /** @biref Filedescriptor for the Input Stream */
 static FILE *in_stream;
 
-/** @brief */
+/** @brief Contains the game state of ONE client at a time. */
 static struct Myshm *shared;  
 
-/** @brief */
+/** @brief Anchor for a list of clients. */
 static struct ClientList *client_list = NULL;  
 
-/** @brief */
+/** @brief Server can access SHM, controlled exclusive by clients. */
 static sem_t *s_server;  
 
-/** @brief */
+/** @brief ONE client can access SHM, controlled by server / clients. */
 static sem_t *s_client;  
 
-/** @brief */
+/** @brief Server tells a waiting client that it can access it's answer now. */ 
 static sem_t *s_return;  
 
-/** @brief */
+/** @brief Indicates wether semaphores are set or not. */
 static char sem_set = -1;  
 
 /** @brief Indicates wether SIGTERM OR SIGINT got set. */
@@ -98,22 +98,25 @@ volatile sig_atomic_t want_quit = 0;
 
 /**
  * @brief Catches SIGINT & SIGTERM for gracefull termination 
- * @param 
- * @return 
+ * @param signal Signal from Sigaction
 **/
 static void signal_handler(int signal);
 
 /**
  * @brief Terminates the program gracefully
- * @param 
- * @return 
+ * @param exitcode The Exitcode 
+ * @param fmt format string
 **/
 static void bail_out(int exitcode, const char *fmt, ...);
 
 /**
+ * @brief Reads input line by line 
+ * @return Pointer to a char array 
+**/
+static char *get_strings();
+
+/**
  * @brief Reads the dictionary
- * @param 
- * @return 
 **/
 static void read_dict();
 
@@ -124,15 +127,14 @@ static void read_dict();
 static void free_resources();
 
 /**
- * @brief sets up a new game 
- * @param 
- * @return 
+ * @brief Sets up a new game 
+ * @param el_cur The currently administrated client
 **/
 static void create_game(struct ClientList *el_cur); 
+
 /**
- * @brief checks the guess 
- * @param 
- * @return 
+ * @brief Checks guess of current client
+ * @param el_cur THe currently administrated client 
 **/
 static void check_guess(struct ClientList *el_cur);
 
@@ -164,6 +166,7 @@ static void bail_out(int exitcode, const char *fmt, ...)
 
 static void free_resources(void) 
 {
+    /* Remove and free all clients. */
     if (client_list != NULL) {
         struct ClientList *el_cur;
         struct ClientList *el_next;
@@ -173,13 +176,17 @@ static void free_resources(void)
             el_next = el_cur->next;    
             free(el_cur);
             el_cur = el_next;
+            
+            /* Every client needs to terminate itself, without
+               the server sem_post(ing) them one by one. */
             if (sem_post(s_client) == -1) {
                 (void) fprintf(stderr, 
-                                "sem_post(3) failed: %s", strerror(errno));
+                                "sem_post(3) failed: %s\n", strerror(errno));
             }
         }
     }
-
+    
+    /* Unmap and unlink SHM. */
     if (shared != NULL) {
         shared->sc_terminate = 1;
         DEBUG("MUNMAP\n");
@@ -243,18 +250,36 @@ static char *get_strings()
     char *string = NULL;
     char ch;
     size_t len = 0;
-
+    while (string == NULL && ch != EOF) {
     while (EOF != (ch = fgetc(in_stream)) && ch != '\n') {
+        if (ch != ' ' && isalpha((int)ch) == 0) {
+           // fprintf(stderr, "Only [a-z] is a valid input. | \t"
+           //                     "| Input another or end with CTRL+D: ");
+            continue;
+        }
         string  = (char*) realloc(string, len+2);
+        if (string == NULL) {
+            bail_out(EXIT_FAILURE, "realloc(3) failed");
+        }
         string[len++] = toupper(ch);
 
         if (len >= MAX_DATA) {
             bail_out(EXIT_FAILURE, "Input too long\n");
         }
     }
-    if(string)
-        string[len] = '\0';
+    if (ferror(in_stream)) {
+        bail_out(EXIT_FAILURE, "Error while reading from stream");
+    }
+    }
 
+    if(string) {
+        string[len] = '\0';
+    } else {
+        printf("\nFinished dictionary...\n");
+        return string;
+    }
+
+    DEBUG("Added string: %s | Input another [a-z] or end with CTRL+D: ", string); 
     return string;
 }
 
@@ -262,9 +287,15 @@ static void read_dict()
 {
     int index;
     for (index = 0; (string = get_strings()); ++index) {
+        if (string[0] == '\0') continue; 
         strings = (char**) realloc(strings, (index+1)*sizeof(*strings));
+        if (strings == NULL) {
+            bail_out(EXIT_FAILURE, "realloc(3) failed");
+        }
         strings[index] = string;
     }
+
+    /* Take a note of how many entries we have yet. */
     dict_size = index;
 }
 
@@ -344,10 +375,8 @@ static void check_guess(struct ClientList *el_cur)
 int main(int argc, char *argv[])  
 {
     uint8_t client_count = 0;
-    int count;
     int shmfd;
     
-    //atexit(free_resources);
     
     /* setup signal handlers */
     const int signals[] = {SIGINT, SIGTERM};
@@ -377,6 +406,7 @@ int main(int argc, char *argv[])
     switch (argc) {
     /* Handle dict input from stdin */
     case 1: 
+        printf("Please input your dictionary: \n");
         in_stream = stdin;
         read_dict();
     break;
@@ -392,10 +422,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "USAGE: %s [input_file]", progname);
         exit(EXIT_FAILURE);
         break; 
-    }
-
-    for(count = 0; count < 3; ++count) {
-        printf("Text: %s\n", strings[count]);
     }
 
     /* Create a new Shared Memory Segment (shm_open) */

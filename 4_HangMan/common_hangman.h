@@ -1,3 +1,11 @@
+/**
+ *  @file common_hangman.h
+ *  @author Constantin Schieber, e1228774
+ *  @brief Contains common Values / Defines for client and server 
+ *  @details Every data structure that gets used in client and server 
+ *  @date 12.01.2016
+ * */
+
 #define MAX_DATA (50)
 #define MAX_INPUT_PER_LINE (80)
 #define MAX_ERRORS (9)
